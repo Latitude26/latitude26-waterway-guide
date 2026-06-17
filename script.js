@@ -1,128 +1,242 @@
-const CAPE_CORAL_CENTER = [26.629, -81.997];
-const map = L.map('map', { zoomControl: true, scrollWheelZoom: true }).setView(CAPE_CORAL_CENTER, 11);
+const DATA_URL = 'Canals.geojson';
+const CONTACT_URL = 'https://livelatitude26.com/content/cape-coral-waterway-gulf-access-guide';
+const CAPE_CORAL = [26.642, -81.997];
 
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19,
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
-
+let map;
 let canalLayer;
-let labelLayer = L.layerGroup();
-let allFeatures = [];
+let labelLayer;
+let geojsonData;
 let selectedLayer = null;
-const saltToggle = document.getElementById('saltToggle');
-const freshToggle = document.getElementById('freshToggle');
-const labelsToggle = document.getElementById('labelsToggle');
-const searchInput = document.getElementById('searchInput');
-const searchBtn = document.getElementById('searchBtn');
-const resetBtn = document.getElementById('resetBtn');
-const countLabel = document.getElementById('countLabel');
-const detailsPanel = document.getElementById('detailsPanel');
+let allFeatures = [];
 
-function waterType(feature){ return String(feature?.properties?.WATER_TYPE || '').toUpperCase(); }
-function isSalt(feature){ return waterType(feature).includes('SALT'); }
-function isFresh(feature){ return waterType(feature).includes('FRESH'); }
-function canalColor(feature){ return isSalt(feature) ? '#0b9eac' : '#2f80ed'; }
-function styleFeature(feature){
-  return { color: canalColor(feature), weight: 3, opacity: .92, fillColor: canalColor(feature), fillOpacity: .22 };
+const els = {
+  stats: document.getElementById('mapStats'),
+  selectedName: document.getElementById('selectedName'),
+  selectedType: document.getElementById('selectedType'),
+  selectedNav: document.getElementById('selectedNav'),
+  selectedBasin: document.getElementById('selectedBasin'),
+  searchInput: document.getElementById('searchInput'),
+  searchBtn: document.getElementById('searchBtn'),
+  searchResults: document.getElementById('searchResults'),
+  showSalt: document.getElementById('showSalt'),
+  showFresh: document.getElementById('showFresh'),
+  showLabels: document.getElementById('showLabels'),
+  resetBtn: document.getElementById('resetBtn'),
+  reviewBtn: document.getElementById('reviewBtn')
+};
+
+function waterType(props) {
+  const t = String(props.WATER_TYPE || '').toUpperCase();
+  return t.includes('FRESH') ? 'FRESH' : 'SALT';
 }
-function selectedStyle(){ return { color:'#f6b43f', weight:5, opacity:1, fillColor:'#f6b43f', fillOpacity:.32 }; }
-function featureVisible(feature){
-  if(isSalt(feature) && !saltToggle.checked) return false;
-  if(isFresh(feature) && !freshToggle.checked) return false;
-  return true;
+
+function waterLabel(props) {
+  return waterType(props) === 'FRESH' ? 'Freshwater' : 'Saltwater / Gulf Access System';
 }
-function popupHtml(props){
-  const name = props.NAME || 'Unnamed waterway';
-  const type = props.WATER_TYPE || 'Verify';
-  const nav = props.NAV_SYST || 'Verify';
-  const basin = props.Basin || 'Verify';
-  return `<div class="popup-title">${escapeHtml(name)}</div>
-    <div class="popup-row"><b>Water type:</b> ${escapeHtml(type)}</div>
-    <div class="popup-row"><b>Navigation system:</b> ${escapeHtml(nav)}</div>
-    <div class="popup-row"><b>Basin:</b> ${escapeHtml(basin)}</div>
-    <hr>
-    <div class="popup-row">Always verify bridge clearance, route, depth, seawall, dock, and lift details before purchasing.</div>`;
+
+function getStyle(feature) {
+  const type = waterType(feature.properties || {});
+  const showSalt = els.showSalt.checked;
+  const showFresh = els.showFresh.checked;
+  const visible = (type === 'SALT' && showSalt) || (type === 'FRESH' && showFresh);
+  return {
+    color: type === 'FRESH' ? '#2f80ed' : '#06a6a6',
+    weight: visible ? 2.5 : 0,
+    opacity: visible ? 0.9 : 0,
+    fillColor: type === 'FRESH' ? '#2f80ed' : '#06a6a6',
+    fillOpacity: visible ? 0.13 : 0,
+    interactive: visible
+  };
 }
-function escapeHtml(value){ return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
-function updateDetails(props){
-  detailsPanel.innerHTML = `<div class="eyebrow">Selected Waterway</div>
-    <h2>${escapeHtml(props.NAME || 'Unnamed waterway')}</h2>
-    <dl>
-      <div><dt>Water Type</dt><dd>${escapeHtml(props.WATER_TYPE || 'Verify')}</dd></div>
-      <div><dt>Navigation System</dt><dd>${escapeHtml(props.NAV_SYST || 'Verify')}</dd></div>
-      <div><dt>Basin</dt><dd>${escapeHtml(props.Basin || 'Verify')}</dd></div>
-    </dl>`;
+
+function selectedStyle() {
+  return { color: '#f2ae2e', weight: 5, opacity: 1, fillColor: '#f2ae2e', fillOpacity: 0.23 };
 }
-function onEachFeature(feature, layer){
-  layer.bindPopup(popupHtml(feature.properties || {}));
-  layer.on('click', () => {
-    if(selectedLayer && selectedLayer.setStyle) canalLayer.resetStyle(selectedLayer);
-    selectedLayer = layer;
-    layer.setStyle(selectedStyle());
-    layer.bringToFront();
-    updateDetails(feature.properties || {});
+
+function popupHtml(props) {
+  const name = props.NAME || 'Unnamed Waterway';
+  const nav = props.NAV_SYST || 'Not listed';
+  const basin = props.Basin || 'Not listed';
+  return `
+    <div class="popup-title">${escapeHtml(name)}</div>
+    <span class="popup-badge">${escapeHtml(waterLabel(props))}</span>
+    <div class="popup-grid">
+      <div class="popup-row"><span>Navigation System</span><strong>${escapeHtml(nav)}</strong></div>
+      <div class="popup-row"><span>Basin</span><strong>${escapeHtml(basin)}</strong></div>
+    </div>
+    <a class="popup-cta" href="${CONTACT_URL}" target="_blank" rel="noopener">Ask Latitude 26° about this waterway</a>
+  `;
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+}
+
+function selectFeature(layer, feature) {
+  if (selectedLayer && selectedLayer !== layer) canalLayer.resetStyle(selectedLayer);
+  selectedLayer = layer;
+  layer.setStyle(selectedStyle());
+  if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) layer.bringToFront();
+  const p = feature.properties || {};
+  els.selectedName.textContent = p.NAME || 'Unnamed Waterway';
+  els.selectedType.textContent = waterLabel(p);
+  els.selectedNav.textContent = p.NAV_SYST || 'Not listed';
+  els.selectedBasin.textContent = p.Basin || 'Not listed';
+}
+
+function onEachFeature(feature, layer) {
+  const props = feature.properties || {};
+  allFeatures.push({ name: props.NAME || 'Unnamed Waterway', feature, layer });
+  layer.bindPopup(popupHtml(props));
+  layer.on({
+    click: () => selectFeature(layer, feature),
+    mouseover: () => { if (layer !== selectedLayer) layer.setStyle({ weight: 4, fillOpacity: 0.22 }); },
+    mouseout: () => { if (layer !== selectedLayer) canalLayer.resetStyle(layer); }
   });
 }
-function renderCanals(){
-  if(canalLayer) map.removeLayer(canalLayer);
-  labelLayer.clearLayers();
-  const visible = allFeatures.filter(featureVisible);
-  canalLayer = L.geoJSON({ type:'FeatureCollection', features: visible }, { style: styleFeature, onEachFeature }).addTo(map);
-  if(labelsToggle.checked){ addLabels(visible); }
-  countLabel.textContent = `${visible.length.toLocaleString()} waterways shown`;
-}
-function addLabels(features){
-  features.forEach(f => {
-    const name = f.properties?.NAME;
-    if(!name) return;
-    const center = L.geoJSON(f).getBounds().getCenter();
-    L.marker(center, { icon: L.divIcon({ className:'canal-label', html: escapeHtml(name), iconSize:null }) }).addTo(labelLayer);
+
+function buildLabels() {
+  if (labelLayer) labelLayer.remove();
+  labelLayer = L.layerGroup();
+  if (!els.showLabels.checked) return;
+  allFeatures.forEach(item => {
+    const p = item.feature.properties || {};
+    if (!p.NAME) return;
+    const type = waterType(p);
+    if ((type === 'SALT' && !els.showSalt.checked) || (type === 'FRESH' && !els.showFresh.checked)) return;
+    try {
+      const c = item.layer.getBounds().getCenter();
+      const marker = L.marker(c, { icon: L.divIcon({ className: 'canal-label', html: escapeHtml(p.NAME), iconSize: null }), interactive: false });
+      labelLayer.addLayer(marker);
+    } catch (e) {}
   });
   labelLayer.addTo(map);
 }
-function resetView(){
-  if(selectedLayer && canalLayer) canalLayer.resetStyle(selectedLayer);
+
+function refreshFilters() {
+  if (!canalLayer) return;
   selectedLayer = null;
-  map.setView(CAPE_CORAL_CENTER, 11);
-  searchInput.value = '';
-}
-function searchCanal(){
-  const q = searchInput.value.trim().toLowerCase();
-  if(!q) return;
-  const match = allFeatures.find(f => String(f.properties?.NAME || '').toLowerCase().includes(q));
-  if(!match){ alert('No matching canal found. Try another canal name.'); return; }
-  const bounds = L.geoJSON(match).getBounds();
-  map.fitBounds(bounds.pad(.4));
-  setTimeout(() => {
-    canalLayer.eachLayer(layer => {
-      if(layer.feature?.properties?.OBJECTID === match.properties?.OBJECTID){
-        layer.fire('click');
-        layer.openPopup();
-      }
-    });
-  }, 250);
-}
-
-fetch('Canals.geojson')
-  .then(r => { if(!r.ok) throw new Error('GeoJSON failed to load'); return r.json(); })
-  .then(data => {
-    allFeatures = data.features || [];
-    renderCanals();
-    const bounds = L.geoJSON(data).getBounds();
-    if(bounds.isValid()) map.fitBounds(bounds.pad(.05));
-    setTimeout(() => map.invalidateSize(), 150);
-    setTimeout(() => map.invalidateSize(), 750);
-  })
-  .catch(err => {
-    console.error(err);
-    countLabel.textContent = 'Map data could not load';
-    alert('The canal map data did not load. Make sure Canals.geojson is in the same GitHub folder as index.html.');
+  canalLayer.setStyle(getStyle);
+  canalLayer.eachLayer(layer => {
+    const type = waterType(layer.feature.properties || {});
+    const visible = (type === 'SALT' && els.showSalt.checked) || (type === 'FRESH' && els.showFresh.checked);
+    if (visible) layer.on('click');
   });
+  buildLabels();
+}
 
-[saltToggle, freshToggle].forEach(el => el.addEventListener('change', renderCanals));
-labelsToggle.addEventListener('change', renderCanals);
-searchBtn.addEventListener('click', searchCanal);
-searchInput.addEventListener('keydown', e => { if(e.key === 'Enter') searchCanal(); });
-resetBtn.addEventListener('click', resetView);
-window.addEventListener('resize', () => setTimeout(() => map.invalidateSize(), 100));
+function showSearchResults(matches) {
+  els.searchResults.innerHTML = '';
+  if (!matches.length) {
+    els.searchResults.hidden = false;
+    els.searchResults.innerHTML = '<div class="result-btn">No canal matches. Try a full Cape Coral address.</div>';
+    return;
+  }
+  els.searchResults.hidden = false;
+  matches.slice(0, 10).forEach(item => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'result-btn';
+    b.textContent = item.name;
+    b.addEventListener('click', () => {
+      els.searchResults.hidden = true;
+      selectFeature(item.layer, item.feature);
+      item.layer.openPopup();
+      map.fitBounds(item.layer.getBounds(), { padding: [60, 60], maxZoom: 15 });
+    });
+    els.searchResults.appendChild(b);
+  });
+}
+
+async function searchAddress(query) {
+  els.searchResults.hidden = false;
+  els.searchResults.innerHTML = '<div class="result-btn">Searching address…</div>';
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=3&countrycodes=us&q=${encodeURIComponent(query + ', Cape Coral, FL')}`;
+  const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  const data = await res.json();
+  els.searchResults.innerHTML = '';
+  if (!data.length) {
+    els.searchResults.innerHTML = '<div class="result-btn">No address found. Try adding Cape Coral, FL.</div>';
+    return;
+  }
+  data.forEach(place => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'result-btn';
+    b.textContent = place.display_name;
+    b.addEventListener('click', () => {
+      els.searchResults.hidden = true;
+      const lat = Number(place.lat), lon = Number(place.lon);
+      L.marker([lat, lon]).addTo(map).bindPopup('<strong>Address search result</strong><br>' + escapeHtml(place.display_name)).openPopup();
+      map.setView([lat, lon], 16);
+    });
+    els.searchResults.appendChild(b);
+  });
+}
+
+async function doSearch() {
+  const q = els.searchInput.value.trim();
+  if (!q) return;
+  const qUpper = q.toUpperCase();
+  const matches = allFeatures.filter(item => item.name.toUpperCase().includes(qUpper));
+  if (matches.length) showSearchResults(matches);
+  else await searchAddress(q);
+}
+
+function initMap() {
+  map = L.map('map', { zoomControl: true, preferCanvas: true }).setView(CAPE_CORAL, 11);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+  setTimeout(() => map.invalidateSize(), 250);
+  window.addEventListener('resize', () => map.invalidateSize());
+}
+
+async function loadData() {
+  const loading = L.DomUtil.create('div', 'loading');
+  loading.textContent = 'Loading Cape Coral waterways…';
+  document.body.appendChild(loading);
+  try {
+    const res = await fetch(DATA_URL, { cache: 'no-cache' });
+    geojsonData = await res.json();
+    allFeatures = [];
+    canalLayer = L.geoJSON(geojsonData, { style: getStyle, onEachFeature }).addTo(map);
+    map.fitBounds(canalLayer.getBounds(), { padding: [30, 30] });
+    const total = geojsonData.features.length;
+    const fresh = geojsonData.features.filter(f => waterType(f.properties || {}) === 'FRESH').length;
+    const salt = total - fresh;
+    els.stats.textContent = `${total.toLocaleString()} waterways shown • ${salt} saltwater / Gulf access • ${fresh} freshwater`;
+    buildLabels();
+  } catch (err) {
+    console.error(err);
+    els.stats.textContent = 'Waterway data could not be loaded';
+  } finally {
+    loading.remove();
+    setTimeout(() => map.invalidateSize(), 350);
+  }
+}
+
+function bindEvents() {
+  els.searchBtn.addEventListener('click', doSearch);
+  els.searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+  els.searchInput.addEventListener('input', () => {
+    const q = els.searchInput.value.trim().toUpperCase();
+    if (q.length < 2) { els.searchResults.hidden = true; return; }
+    const matches = allFeatures.filter(item => item.name.toUpperCase().includes(q));
+    if (matches.length) showSearchResults(matches);
+  });
+  [els.showSalt, els.showFresh, els.showLabels].forEach(el => el.addEventListener('change', refreshFilters));
+  els.resetBtn.addEventListener('click', () => {
+    els.showSalt.checked = true; els.showFresh.checked = true; els.showLabels.checked = false; els.searchInput.value = ''; els.searchResults.hidden = true;
+    refreshFilters();
+    if (canalLayer) map.fitBounds(canalLayer.getBounds(), { padding: [30, 30] });
+  });
+  els.reviewBtn.addEventListener('click', () => window.open(CONTACT_URL, '_blank'));
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  initMap();
+  bindEvents();
+  await loadData();
+});

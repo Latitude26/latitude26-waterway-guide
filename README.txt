@@ -1,17 +1,21 @@
-Latitude 26° Cape Coral Waterfront Explorer - Version 3
+Latitude 26° Cape Coral Waterfront Explorer - Version 4
 
-UPLOAD THESE FILES TO GITHUB:
+FILES INCLUDED
 - index.html
 - styles.css
 - script.js
 - Canals.geojson
 - README.txt
 
-IMPORTANT:
-Upload these individual files to the root/main folder of the latitude26-waterway-guide GitHub repository.
-Do not upload this ZIP file itself.
+HOW TO UPDATE GITHUB PAGES
+1. Open your GitHub repository: Latitude26/latitude26-waterway-guide
+2. Upload and replace all files above.
+3. Commit changes.
+4. Wait 1-2 minutes.
+5. Refresh https://latitude26.github.io/latitude26-waterway-guide/
 
-After committing changes, wait 1-2 minutes and refresh:
-https://latitude26.github.io/latitude26-waterway-guide/
+AGENT3000 IFRAME
+Agent3000 support already embedded the GitHub Pages URL. Once GitHub updates, the Agent3000 page should update automatically.
 
-This version is rebuilt from scratch to fix map tile loading issues and create a cleaner, more stable Leaflet map.
+NOTE
+This guide is for education and lead generation. Buyers should verify water access, bridges, depths, seawall, docks, lifts, and flood requirements before purchase.

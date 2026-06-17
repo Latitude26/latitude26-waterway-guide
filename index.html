@@ -4,10 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cape Coral Waterfront Explorer | Latitude 26° Gulf Coast Group</title>
-  <meta name="description" content="Explore Cape Coral waterways, canals, Gulf access areas, freshwater canals, and boating considerations with Latitude 26° Gulf Coast Group." />
-  <link rel="preconnect" href="https://unpkg.com" />
+  <meta name="description" content="Interactive Cape Coral canal map and Gulf access guide by Latitude 26° Gulf Coast Group." />
   <link rel="preconnect" href="https://tile.openstreetmap.org" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQk4ZYo6d1kxhZ5H9zgCmkHf7kCy2s=" crossorigin="" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -19,73 +18,60 @@
         <p>Search canals, compare Gulf access and freshwater areas, and get a smarter starting point before you fall in love with the view.</p>
       </section>
 
-      <section class="panel">
-        <label for="searchInput">Search a canal name</label>
+      <section class="panel search-panel">
+        <label for="searchInput">Search by canal name or Cape Coral address</label>
         <div class="search-row">
-          <input id="searchInput" type="search" placeholder="Example: Rubicon, Spreader, Abaco" autocomplete="off" />
+          <input id="searchInput" type="search" placeholder="Example: Rubicon Canal or 1456 SE 13th Ter" autocomplete="off" />
           <button id="searchBtn" type="button">Search</button>
         </div>
-        <p class="hint">Tip: start typing a canal name, then click Search.</p>
+        <div id="searchHelp" class="helper">Tip: canal names load instantly. Addresses use OpenStreetMap geocoding.</div>
+        <div id="searchResults" class="results" hidden></div>
       </section>
 
       <section class="panel">
         <h2>Waterway Filters</h2>
-        <label class="check"><input type="checkbox" id="saltToggle" checked /> Saltwater / Gulf access system</label>
-        <label class="check"><input type="checkbox" id="freshToggle" checked /> Freshwater canals</label>
-        <label class="check"><input type="checkbox" id="labelsToggle" /> Show canal labels</label>
+        <label class="check"><input type="checkbox" id="showSalt" checked /> Saltwater / Gulf access system</label>
+        <label class="check"><input type="checkbox" id="showFresh" checked /> Freshwater canals</label>
+        <label class="check"><input type="checkbox" id="showLabels" /> Show canal labels</label>
         <button id="resetBtn" class="secondary" type="button">Reset Map</button>
       </section>
 
-      <section class="panel legend">
+      <section class="panel legend-panel">
         <h2>Map Legend</h2>
-        <div class="legend-item"><span class="swatch salt"></span><div><strong>Saltwater / Gulf access system</strong><small>Verify bridges, locks, depths, and route details before purchasing.</small></div></div>
-        <div class="legend-item"><span class="swatch fresh"></span><div><strong>Freshwater system</strong><small>Beautiful waterfront living, but not connected to the Gulf.</small></div></div>
-        <div class="legend-item"><span class="swatch selected"></span><div><strong>Selected canal</strong><small>Click any waterway for details.</small></div></div>
+        <div class="legend-item"><span class="swatch salt"></span><div><strong>Saltwater / Gulf access system</strong><br><small>Verify bridges, locks, depths, and route details before purchasing.</small></div></div>
+        <div class="legend-item"><span class="swatch fresh"></span><div><strong>Freshwater system</strong><br><small>Beautiful waterfront living, but not connected to the Gulf.</small></div></div>
+        <div class="legend-item"><span class="swatch selected"></span><div><strong>Selected canal</strong><br><small>Click any waterway for details.</small></div></div>
       </section>
 
-      <section class="panel selected-card" id="detailsPanel">
-        <div class="eyebrow">Selected Waterway</div>
-        <h2>Click a canal on the map</h2>
-        <dl>
-          <div><dt>Water Type</dt><dd>—</dd></div>
-          <div><dt>Navigation System</dt><dd>—</dd></div>
-          <div><dt>Basin</dt><dd>—</dd></div>
+      <section class="panel selected-panel" aria-live="polite">
+        <div class="eyebrow teal">Selected Waterway</div>
+        <h2 id="selectedName">Click a canal on the map</h2>
+        <dl class="details">
+          <div><dt>Water Type</dt><dd id="selectedType">—</dd></div>
+          <div><dt>Navigation System</dt><dd id="selectedNav">—</dd></div>
+          <div><dt>Basin</dt><dd id="selectedBasin">—</dd></div>
         </dl>
-      </section>
-
-      <section class="panel cta-panel">
-        <h2>Want us to check a waterfront home?</h2>
-        <p>Send us the address and we’ll help you review canal type, access, bridges, boating fit, flood zone, seawall, dock, and lift details.</p>
-        <a class="cta" href="https://livelatitude26.com/contact" target="_blank" rel="noopener">Request a Waterway Review</a>
+        <a class="cta" href="https://livelatitude26.com/content/cape-coral-waterway-gulf-access-guide" target="_blank" rel="noopener">Request a Waterway Review</a>
       </section>
     </aside>
 
     <main class="map-area">
-      <div class="topbar">
+      <header class="topbar">
         <div>
-          <span class="eyebrow">Interactive Cape Coral Canal Map</span>
-          <strong id="countLabel">Loading waterways…</strong>
+          <div class="eyebrow teal">Interactive Cape Coral Canal Map</div>
+          <strong id="mapStats">Loading waterways…</strong>
         </div>
-        <a href="https://livelatitude26.com/contact" target="_blank" rel="noopener">Request a Waterway Review</a>
-      </div>
+        <div class="top-actions">
+          <a class="mini-link" href="https://livelatitude26.com/" target="_blank" rel="noopener">Latitude26</a>
+          <button id="reviewBtn" type="button">Request a Waterway Review</button>
+        </div>
+      </header>
       <div id="map" role="application" aria-label="Interactive Cape Coral waterway map"></div>
+      <div class="map-note">Waterway data is provided for educational planning only. Always verify access, bridge clearance, depths, seawall condition, docks, lifts, and flood requirements before purchase.</div>
     </main>
   </div>
 
-  <section class="guide-content">
-    <div class="content-wrap">
-      <h2>Cape Coral Waterway & Gulf Access Guide</h2>
-      <p>Not all waterfront homes in Cape Coral offer the same boating experience. Some provide saltwater/Gulf access, others include bridge or lock considerations, and many are freshwater canals that are ideal for peaceful waterfront living but do not connect to the Gulf.</p>
-      <div class="info-grid">
-        <article><h3>Direct / Sailboat Access</h3><p>Often the most desirable for larger boats because there are typically no fixed bridges between the home and open water. Always verify the exact route.</p></article>
-        <article><h3>Gulf Access With Bridges</h3><p>These homes may reach open water, but bridge clearance matters. A route that works for one boat may not work for another.</p></article>
-        <article><h3>Freshwater Canals</h3><p>Freshwater canals can be wonderful for views, kayaking, fishing, and wildlife, but they are not connected to the Gulf.</p></article>
-      </div>
-      <p class="disclaimer"><strong>Disclaimer:</strong> This tool is for general informational purposes only. Waterway access, bridge clearance, route, depth, seawall, dock, lift, and flood-zone details should be independently verified through official sources and qualified professionals before purchase.</p>
-    </div>
-  </section>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="script.js"></script>
 </body>
 </html>
