@@ -25,13 +25,27 @@ const els = {
   reviewBtn: document.getElementById('reviewBtn')
 };
 
+function escapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, function(ch) {
+    return {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[ch];
+  });
+}
+
 function waterType(props) {
   const t = String(props.WATER_TYPE || '').toUpperCase();
   return t.includes('FRESH') ? 'FRESH' : 'SALT';
 }
 
 function waterLabel(props) {
-  return waterType(props) === 'FRESH' ? 'Freshwater' : 'Saltwater / Gulf Access System';
+  return waterType(props) === 'FRESH'
+    ? 'Freshwater'
+    : 'Saltwater / Gulf Access System';
 }
 
 function getStyle(feature) {
@@ -69,21 +83,19 @@ function popupHtml(props) {
     <div class="popup-title">${escapeHtml(name)}</div>
     <span class="popup-badge">${escapeHtml(waterLabel(props))}</span>
     <div class="popup-grid">
-      <div class="popup-row"><span>Navigation System</span><strong>${escapeHtml(nav)}</strong></div>
-      <div class="popup-row"><span>Basin</span><strong>${escapeHtml(basin)}</strong></div>
+      <div class="popup-row">
+        <span>Navigation System</span>
+        <strong>${escapeHtml(nav)}</strong>
+      </div>
+      <div class="popup-row">
+        <span>Basin</span>
+        <strong>${escapeHtml(basin)}</strong>
+      </div>
     </div>
-    <a class="popup-cta" href="${CONTACT_URL}" target="_blank" rel="noopener">Ask Latitude 26° about this waterway</a>
+    <a class="popup-cta" href="${CONTACT_URL}" target="_blank" rel="noopener">
+      Ask Latitude 26° about this waterway
+    </a>
   `;
-}
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>'"]/g, ch => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    "'": '&#39;',
-    '"': '&quot;'
-  }[ch]));
 }
 
 function selectFeature(layer, feature) {
@@ -117,13 +129,18 @@ function onEachFeature(feature, layer) {
   layer.bindPopup(popupHtml(props));
 
   layer.on({
-    click: () => selectFeature(layer, feature),
-    mouseover: () => {
+    click: function() {
+      selectFeature(layer, feature);
+    },
+    mouseover: function() {
       if (layer !== selectedLayer) {
-        layer.setStyle({ weight: 4, fillOpacity: 0.22 });
+        layer.setStyle({
+          weight: 4,
+          fillOpacity: 0.22
+        });
       }
     },
-    mouseout: () => {
+    mouseout: function() {
       if (layer !== selectedLayer) {
         canalLayer.resetStyle(layer);
       }
@@ -142,7 +159,7 @@ function buildLabels() {
     return;
   }
 
-  allFeatures.forEach(item => {
+  allFeatures.forEach(function(item) {
     const p = item.feature.properties || {};
 
     if (!p.NAME) {
@@ -194,13 +211,13 @@ function showSearchResults(matches) {
 
   els.searchResults.hidden = false;
 
-  matches.slice(0, 10).forEach(item => {
+  matches.slice(0, 10).forEach(function(item) {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'result-btn';
     b.textContent = item.name;
 
-    b.addEventListener('click', () => {
+    b.addEventListener('click', function() {
       els.searchResults.hidden = true;
       selectFeature(item.layer, item.feature);
       item.layer.openPopup();
@@ -219,40 +236,47 @@ async function searchAddress(query) {
   els.searchResults.innerHTML = '<div class="result-btn">Searching address…</div>';
 
   const url = `https://nominatim.openstreetmap.org/search?format=json&limit=3&countrycodes=us&q=${encodeURIComponent(query + ', Cape Coral, FL')}`;
-  const res = await fetch(url, {
-    headers: { 'Accept': 'application/json' }
-  });
 
-  const data = await res.json();
-  els.searchResults.innerHTML = '';
-
-  if (!data.length) {
-    els.searchResults.innerHTML = '<div class="result-btn">No address found. Try adding Cape Coral, FL.</div>';
-    return;
-  }
-
-  data.forEach(place => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'result-btn';
-    b.textContent = place.display_name;
-
-    b.addEventListener('click', () => {
-      els.searchResults.hidden = true;
-
-      const lat = Number(place.lat);
-      const lon = Number(place.lon);
-
-      L.marker([lat, lon])
-        .addTo(map)
-        .bindPopup('<strong>Address search result</strong><br>' + escapeHtml(place.display_name))
-        .openPopup();
-
-      map.setView([lat, lon], 16);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        Accept: 'application/json'
+      }
     });
 
-    els.searchResults.appendChild(b);
-  });
+    const data = await res.json();
+    els.searchResults.innerHTML = '';
+
+    if (!data.length) {
+      els.searchResults.innerHTML = '<div class="result-btn">No address found. Try adding Cape Coral, FL.</div>';
+      return;
+    }
+
+    data.forEach(function(place) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'result-btn';
+      b.textContent = place.display_name;
+
+      b.addEventListener('click', function() {
+        els.searchResults.hidden = true;
+
+        const lat = Number(place.lat);
+        const lon = Number(place.lon);
+
+        L.marker([lat, lon])
+          .addTo(map)
+          .bindPopup('<strong>Address search result</strong><br>' + escapeHtml(place.display_name))
+          .openPopup();
+
+        map.setView([lat, lon], 16);
+      });
+
+      els.searchResults.appendChild(b);
+    });
+  } catch (err) {
+    els.searchResults.innerHTML = '<div class="result-btn">Address search is unavailable right now.</div>';
+  }
 }
 
 async function doSearch() {
@@ -263,7 +287,9 @@ async function doSearch() {
   }
 
   const qUpper = q.toUpperCase();
-  const matches = allFeatures.filter(item => item.name.toUpperCase().includes(qUpper));
+  const matches = allFeatures.filter(function(item) {
+    return item.name.toUpperCase().includes(qUpper);
+  });
 
   if (matches.length) {
     showSearchResults(matches);
@@ -281,13 +307,18 @@ function initMap() {
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     maxZoom: 19,
     subdomains: 'abcd',
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    attribution: '© OpenStreetMap contributors © CARTO'
   }).addTo(map);
 
-  setTimeout(() => map.invalidateSize(), 250);
-  setTimeout(() => map.invalidateSize(), 1000);
+  setTimeout(function() {
+    map.invalidateSize();
+  }, 300);
 
-  window.addEventListener('resize', () => {
+  setTimeout(function() {
+    map.invalidateSize();
+  }, 1200);
+
+  window.addEventListener('resize', function() {
     map.invalidateSize();
   });
 }
@@ -298,13 +329,16 @@ async function loadData() {
   document.body.appendChild(loading);
 
   try {
-    const res = await fetch(DATA_URL, { cache: 'no-cache' });
+    const res = await fetch(DATA_URL, {
+      cache: 'no-cache'
+    });
+
     geojsonData = await res.json();
     allFeatures = [];
 
     canalLayer = L.geoJSON(geojsonData, {
       style: getStyle,
-      onEachFeature
+      onEachFeature: onEachFeature
     }).addTo(map);
 
     map.fitBounds(canalLayer.getBounds(), {
@@ -312,7 +346,9 @@ async function loadData() {
     });
 
     const total = geojsonData.features.length;
-    const fresh = geojsonData.features.filter(f => waterType(f.properties || {}) === 'FRESH').length;
+    const fresh = geojsonData.features.filter(function(f) {
+      return waterType(f.properties || {}) === 'FRESH';
+    }).length;
     const salt = total - fresh;
 
     els.stats.textContent = `${total.toLocaleString()} waterways shown • ${salt} saltwater / Gulf access • ${fresh} freshwater`;
@@ -323,21 +359,27 @@ async function loadData() {
     els.stats.textContent = 'Waterway data could not be loaded';
   } finally {
     loading.remove();
-    setTimeout(() => map.invalidateSize(), 350);
-    setTimeout(() => map.invalidateSize(), 1200);
+
+    setTimeout(function() {
+      map.invalidateSize();
+    }, 350);
+
+    setTimeout(function() {
+      map.invalidateSize();
+    }, 1200);
   }
 }
 
 function bindEvents() {
   els.searchBtn.addEventListener('click', doSearch);
 
-  els.searchInput.addEventListener('keydown', e => {
+  els.searchInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
       doSearch();
     }
   });
 
-  els.searchInput.addEventListener('input', () => {
+  els.searchInput.addEventListener('input', function() {
     const q = els.searchInput.value.trim().toUpperCase();
 
     if (q.length < 2) {
@@ -345,18 +387,20 @@ function bindEvents() {
       return;
     }
 
-    const matches = allFeatures.filter(item => item.name.toUpperCase().includes(q));
+    const matches = allFeatures.filter(function(item) {
+      return item.name.toUpperCase().includes(q);
+    });
 
     if (matches.length) {
       showSearchResults(matches);
     }
   });
 
-  [els.showSalt, els.showFresh, els.showLabels].forEach(el => {
+  [els.showSalt, els.showFresh, els.showLabels].forEach(function(el) {
     el.addEventListener('change', refreshFilters);
   });
 
-  els.resetBtn.addEventListener('click', () => {
+  els.resetBtn.addEventListener('click', function() {
     els.showSalt.checked = true;
     els.showFresh.checked = true;
     els.showLabels.checked = false;
@@ -372,12 +416,12 @@ function bindEvents() {
     }
   });
 
-  els.reviewBtn.addEventListener('click', () => {
+  els.reviewBtn.addEventListener('click', function() {
     window.open(CONTACT_URL, '_blank');
   });
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', async function() {
   initMap();
   bindEvents();
   await loadData();
