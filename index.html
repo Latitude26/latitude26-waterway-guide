@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cape Coral Waterway & Gulf Access Guide | Latitude 26° Gulf Coast Group</title>
+  <meta name="description" content="Explore Cape Coral canals, Gulf access, freshwater waterways, bridge considerations, and waterfront-home buying tips with Latitude 26° Gulf Coast Group." />
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ/LolLqXgL+nCXkaDLPAfB/sVKxXw=" crossorigin="" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-overlay">
+      <div class="container hero-inner">
+        <p class="eyebrow">Latitude 26° Gulf Coast Group</p>
+        <h1>Cape Coral Waterway & Gulf Access Guide</h1>
+        <p class="lead">Know the route before you fall in love with the view. Explore canal types, boating access, and waterfront-home considerations across Cape Coral.</p>
+        <a class="button" href="#map-section">Explore the Map</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro container">
+      <div>
+        <h2>Not All Waterfront Homes Are the Same</h2>
+        <p>Cape Coral waterfront homes can offer very different boating experiences. Some provide direct Gulf access with no bridges, others include bridge restrictions, and some are freshwater only. This guide is a starting point to help buyers understand what to verify before writing an offer.</p>
+      </div>
+      <div class="cta-card">
+        <h3>Want us to check a home?</h3>
+        <p>Send us the address and our team can help you review canal type, route, bridge considerations, flood zone, seawall, dock, and boat-lift details.</p>
+        <a class="button secondary" href="mailto:melodiehagopian@gmail.com?subject=Waterway%20Review%20Request">Request a Waterway Review</a>
+      </div>
+    </section>
+
+    <section id="map-section" class="map-wrap">
+      <div class="map-panel">
+        <div class="panel-header">
+          <h2>Interactive Canal Map</h2>
+          <p>Search an address or canal name, then click a canal for details.</p>
+        </div>
+        <div class="search-grid">
+          <div>
+            <label for="addressSearch">Search an address</label>
+            <div class="search-row">
+              <input id="addressSearch" type="text" placeholder="Example: 1456 SE 13th Ter, Cape Coral, FL" />
+              <button id="addressBtn">Search</button>
+            </div>
+          </div>
+          <div>
+            <label for="canalSearch">Search a canal</label>
+            <div class="search-row">
+              <input id="canalSearch" type="text" placeholder="Example: Rubicon Canal" />
+              <button id="canalBtn">Find</button>
+            </div>
+          </div>
+        </div>
+        <div class="filters">
+          <button class="filter active" data-filter="ALL">All</button>
+          <button class="filter" data-filter="SALT">Salt / Gulf System</button>
+          <button class="filter" data-filter="FRESH">Freshwater</button>
+        </div>
+        <div class="legend">
+          <span><i class="legend-salt"></i> Salt / Gulf System</span>
+          <span><i class="legend-fresh"></i> Freshwater</span>
+          <span><i class="legend-selected"></i> Selected</span>
+        </div>
+      </div>
+      <div id="map" aria-label="Cape Coral canal map"></div>
+    </section>
+
+    <section class="container cards-section">
+      <h2>Understanding Cape Coral Waterways</h2>
+      <div class="cards">
+        <article class="card">
+          <h3>Direct Gulf Access</h3>
+          <p>Often called sailboat access, these homes may provide unrestricted access to the Caloosahatchee River and Gulf of Mexico. Always verify the route and depth for your specific boat.</p>
+        </article>
+        <article class="card">
+          <h3>Gulf Access With Bridges</h3>
+          <p>These homes can reach open water, but your route may pass under one or more bridges. Bridge clearance, tide, and boat height matter.</p>
+        </article>
+        <article class="card">
+          <h3>Freshwater Canals</h3>
+          <p>Freshwater canal homes are popular for water views, kayaking, fishing, and peaceful living, but they do not provide boating access to the Gulf.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="checklist-section">
+      <div class="container checklist-grid">
+        <div>
+          <h2>Before You Buy a Waterfront Home, Check This First</h2>
+          <p>Waterfront details can affect price, insurance, lifestyle, and resale value.</p>
+        </div>
+        <ul class="checklist">
+          <li>Gulf access or freshwater?</li>
+          <li>Direct route or bridges?</li>
+          <li>Bridge clearance for your boat?</li>
+          <li>Approximate boating time to open water?</li>
+          <li>Seawall condition and age?</li>
+          <li>Dock, lift, and electrical condition?</li>
+          <li>Flood zone and insurance considerations?</li>
+          <li>Any locks, weirs, or route restrictions?</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="container disclaimer">
+      <h2>Important Disclaimer</h2>
+      <p>This guide is for general informational purposes only. Waterway access, bridge clearances, canal conditions, boating routes, depths, seawalls, docks, lifts, and flood zones should always be independently verified through the City of Cape Coral, Lee County, official GIS resources, marine professionals, inspectors, surveyors, and insurance providers before purchasing a property.</p>
+      <p class="final-cta">Thinking about buying, selling, or investing in Southwest Florida? Our team at Latitude 26° Gulf Coast Group is here to help you every step of the way.</p>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="script.js"></script>
+</body>
+</html>
