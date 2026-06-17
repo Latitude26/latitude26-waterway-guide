@@ -47,3 +47,12 @@ button:hover,.cta:hover,.topbar a:hover{filter:brightness(.95)}
 .map-disclaimer{position:absolute;left:18px;right:18px;bottom:16px;z-index:2;background:rgba(9,61,93,.88);color:white;border-radius:14px;padding:10px 14px;font-size:12px;line-height:1.4;text-align:center;box-shadow:0 8px 22px rgba(9,61,93,.18)}
 @media(max-width:900px){.app-shell{grid-template-columns:1fr;height:auto;overflow:auto}.panel{height:auto;max-height:none;border-right:0}.map-wrap{height:78vh;min-height:620px}.topbar{position:absolute;display:block}.topbar a{margin-top:9px}.brand-card{border-radius:18px}h1{font-size:29px}.map-disclaimer{font-size:11px}}
 @media(max-width:520px){.panel{padding:14px}.search-row{grid-template-columns:1fr}.topbar{left:10px;right:10px;top:10px}.map-disclaimer{left:10px;right:10px;bottom:10px}.brand-card{padding:22px 18px}h1{font-size:26px}}
+.leaflet-container img,
+.leaflet-tile {
+  max-width: none !important;
+  max-height: none !important;
+}
+
+.leaflet-tile-container {
+  pointer-events: none;
+}
