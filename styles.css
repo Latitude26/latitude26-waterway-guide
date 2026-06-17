@@ -52,7 +52,3 @@ button:hover,.cta:hover,.topbar a:hover{filter:brightness(.95)}
   max-width: none !important;
   max-height: none !important;
 }
-
-.leaflet-tile-container {
-  pointer-events: none;
-}
