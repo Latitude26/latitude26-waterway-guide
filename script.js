@@ -1,153 +1,128 @@
-const CAPE_CORAL_CENTER = [26.6298, -81.9953];
-const map = L.map('map', { zoomControl: false }).setView(CAPE_CORAL_CENTER, 12);
-L.control.zoom({ position: 'bottomright' }).addTo(map);
+const CAPE_CORAL_CENTER = [26.629, -81.997];
+const map = L.map('map', { zoomControl: true, scrollWheelZoom: true }).setView(CAPE_CORAL_CENTER, 11);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
   attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
 let canalLayer;
-let labelLayer = L.layerGroup().addTo(map);
+let labelLayer = L.layerGroup();
+let allFeatures = [];
 let selectedLayer = null;
-let geoData = null;
-let searchMarker = null;
+const saltToggle = document.getElementById('saltToggle');
+const freshToggle = document.getElementById('freshToggle');
+const labelsToggle = document.getElementById('labelsToggle');
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const resetBtn = document.getElementById('resetBtn');
+const countLabel = document.getElementById('countLabel');
+const detailsPanel = document.getElementById('detailsPanel');
 
-const showSalt = document.getElementById('showSalt');
-const showFresh = document.getElementById('showFresh');
-const showLabels = document.getElementById('showLabels');
-const countText = document.getElementById('countText');
-const searchStatus = document.getElementById('searchStatus');
-
-function waterTypeLabel(value){
-  if(!value) return 'Unknown';
-  if(String(value).toUpperCase()==='SALT') return 'Saltwater / Gulf Access System';
-  if(String(value).toUpperCase()==='FRESH') return 'Freshwater System';
-  return value;
-}
-
+function waterType(feature){ return String(feature?.properties?.WATER_TYPE || '').toUpperCase(); }
+function isSalt(feature){ return waterType(feature).includes('SALT'); }
+function isFresh(feature){ return waterType(feature).includes('FRESH'); }
+function canalColor(feature){ return isSalt(feature) ? '#0b9eac' : '#2f80ed'; }
 function styleFeature(feature){
-  const type = String(feature.properties?.WATER_TYPE || '').toUpperCase();
-  const isSalt = type === 'SALT';
-  return {
-    color: isSalt ? '#09a79d' : '#2e86de',
-    weight: 2.25,
-    opacity: .9,
-    fillColor: isSalt ? '#09a79d' : '#2e86de',
-    fillOpacity: .22
-  };
+  return { color: canalColor(feature), weight: 3, opacity: .92, fillColor: canalColor(feature), fillOpacity: .22 };
 }
-
-function filterFeature(feature){
-  const type = String(feature.properties?.WATER_TYPE || '').toUpperCase();
-  if(type === 'SALT' && !showSalt.checked) return false;
-  if(type === 'FRESH' && !showFresh.checked) return false;
+function selectedStyle(){ return { color:'#f6b43f', weight:5, opacity:1, fillColor:'#f6b43f', fillOpacity:.32 }; }
+function featureVisible(feature){
+  if(isSalt(feature) && !saltToggle.checked) return false;
+  if(isFresh(feature) && !freshToggle.checked) return false;
   return true;
 }
-
 function popupHtml(props){
-  const name = props.NAME || 'Unnamed Canal';
-  const subject = encodeURIComponent(`Waterway question: ${name}`);
-  return `<div class="popup-title">${name}</div>
-    <div class="popup-line"><strong>Water Type:</strong> ${waterTypeLabel(props.WATER_TYPE)}</div>
-    <div class="popup-line"><strong>Navigation System:</strong> ${props.NAV_SYST || 'Verify'}</div>
-    <div class="popup-line"><strong>Basin:</strong> ${props.Basin || 'Verify'}</div>
-    <a class="popup-btn" href="https://livelatitude26.com/contact?subject=${subject}" target="_blank" rel="noopener">Ask About This Waterway</a>`;
+  const name = props.NAME || 'Unnamed waterway';
+  const type = props.WATER_TYPE || 'Verify';
+  const nav = props.NAV_SYST || 'Verify';
+  const basin = props.Basin || 'Verify';
+  return `<div class="popup-title">${escapeHtml(name)}</div>
+    <div class="popup-row"><b>Water type:</b> ${escapeHtml(type)}</div>
+    <div class="popup-row"><b>Navigation system:</b> ${escapeHtml(nav)}</div>
+    <div class="popup-row"><b>Basin:</b> ${escapeHtml(basin)}</div>
+    <hr>
+    <div class="popup-row">Always verify bridge clearance, route, depth, seawall, dock, and lift details before purchasing.</div>`;
 }
-
-function updateReport(props){
-  const name = props.NAME || 'Unnamed Canal';
-  document.getElementById('canalName').textContent = name;
-  document.getElementById('waterType').textContent = waterTypeLabel(props.WATER_TYPE);
-  document.getElementById('navSystem').textContent = props.NAV_SYST || 'Verify';
-  document.getElementById('basin').textContent = props.Basin || 'Verify';
-  document.getElementById('canalNote').textContent = `${name} is shown from Cape Coral canal GIS data. Before relying on this for a purchase, verify the exact route, bridge clearances, depth, dock/lift details, and boating suitability for your specific vessel.`;
-  document.getElementById('askLink').href = `https://livelatitude26.com/contact?subject=${encodeURIComponent('Waterway question: ' + name)}`;
+function escapeHtml(value){ return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function updateDetails(props){
+  detailsPanel.innerHTML = `<div class="eyebrow">Selected Waterway</div>
+    <h2>${escapeHtml(props.NAME || 'Unnamed waterway')}</h2>
+    <dl>
+      <div><dt>Water Type</dt><dd>${escapeHtml(props.WATER_TYPE || 'Verify')}</dd></div>
+      <div><dt>Navigation System</dt><dd>${escapeHtml(props.NAV_SYST || 'Verify')}</dd></div>
+      <div><dt>Basin</dt><dd>${escapeHtml(props.Basin || 'Verify')}</dd></div>
+    </dl>`;
 }
-
 function onEachFeature(feature, layer){
-  const props = feature.properties || {};
-  layer.bindPopup(popupHtml(props));
+  layer.bindPopup(popupHtml(feature.properties || {}));
   layer.on('click', () => {
-    if(selectedLayer) canalLayer.resetStyle(selectedLayer);
+    if(selectedLayer && selectedLayer.setStyle) canalLayer.resetStyle(selectedLayer);
     selectedLayer = layer;
-    layer.setStyle({ color:'#f6b73c', weight:5, opacity:1, fillOpacity:.36 });
+    layer.setStyle(selectedStyle());
     layer.bringToFront();
-    updateReport(props);
+    updateDetails(feature.properties || {});
   });
 }
-
-function addLabels(){
-  labelLayer.clearLayers();
-  if(!showLabels.checked || !geoData) return;
-  geoData.features.forEach(feature => {
-    if(!filterFeature(feature)) return;
-    const props = feature.properties || {};
-    const name = props.NAME;
-    if(!name || !feature.geometry) return;
-    try{
-      const temp = L.geoJSON(feature);
-      const center = temp.getBounds().getCenter();
-      L.marker(center, {
-        interactive:false,
-        icon:L.divIcon({ className:'canal-label', html:name.replace(' CANAL',''), iconSize:null })
-      }).addTo(labelLayer);
-    }catch(e){}
-  });
-}
-
-function renderLayer(){
+function renderCanals(){
   if(canalLayer) map.removeLayer(canalLayer);
+  labelLayer.clearLayers();
+  const visible = allFeatures.filter(featureVisible);
+  canalLayer = L.geoJSON({ type:'FeatureCollection', features: visible }, { style: styleFeature, onEachFeature }).addTo(map);
+  if(labelsToggle.checked){ addLabels(visible); }
+  countLabel.textContent = `${visible.length.toLocaleString()} waterways shown`;
+}
+function addLabels(features){
+  features.forEach(f => {
+    const name = f.properties?.NAME;
+    if(!name) return;
+    const center = L.geoJSON(f).getBounds().getCenter();
+    L.marker(center, { icon: L.divIcon({ className:'canal-label', html: escapeHtml(name), iconSize:null }) }).addTo(labelLayer);
+  });
+  labelLayer.addTo(map);
+}
+function resetView(){
+  if(selectedLayer && canalLayer) canalLayer.resetStyle(selectedLayer);
   selectedLayer = null;
-  canalLayer = L.geoJSON(geoData, { style: styleFeature, filter: filterFeature, onEachFeature }).addTo(map);
-  const visible = geoData.features.filter(filterFeature).length;
-  countText.textContent = `${visible.toLocaleString()} waterways shown`;
-  if(visible){ map.fitBounds(canalLayer.getBounds(), { padding:[25,25] }); }
-  addLabels();
+  map.setView(CAPE_CORAL_CENTER, 11);
+  searchInput.value = '';
+}
+function searchCanal(){
+  const q = searchInput.value.trim().toLowerCase();
+  if(!q) return;
+  const match = allFeatures.find(f => String(f.properties?.NAME || '').toLowerCase().includes(q));
+  if(!match){ alert('No matching canal found. Try another canal name.'); return; }
+  const bounds = L.geoJSON(match).getBounds();
+  map.fitBounds(bounds.pad(.4));
+  setTimeout(() => {
+    canalLayer.eachLayer(layer => {
+      if(layer.feature?.properties?.OBJECTID === match.properties?.OBJECTID){
+        layer.fire('click');
+        layer.openPopup();
+      }
+    });
+  }, 250);
 }
 
-async function loadCanals(){
-  try{
-    const res = await fetch('Canals.geojson');
-    if(!res.ok) throw new Error('Could not load canal data');
-    geoData = await res.json();
-    renderLayer();
-  }catch(error){
-    countText.textContent = 'Map data could not load';
-    console.error(error);
-  }
-}
+fetch('Canals.geojson')
+  .then(r => { if(!r.ok) throw new Error('GeoJSON failed to load'); return r.json(); })
+  .then(data => {
+    allFeatures = data.features || [];
+    renderCanals();
+    const bounds = L.geoJSON(data).getBounds();
+    if(bounds.isValid()) map.fitBounds(bounds.pad(.05));
+    setTimeout(() => map.invalidateSize(), 150);
+    setTimeout(() => map.invalidateSize(), 750);
+  })
+  .catch(err => {
+    console.error(err);
+    countLabel.textContent = 'Map data could not load';
+    alert('The canal map data did not load. Make sure Canals.geojson is in the same GitHub folder as index.html.');
+  });
 
-async function searchAddress(){
-  const query = document.getElementById('addressSearch').value.trim();
-  if(!query){ searchStatus.textContent = 'Enter a Cape Coral address first.'; return; }
-  searchStatus.textContent = 'Searching...';
-  const fullQuery = `${query}, Cape Coral, FL`;
-  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=${encodeURIComponent(fullQuery)}`;
-  try{
-    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-    const results = await res.json();
-    if(!results.length){ searchStatus.textContent = 'No match found. Try adding city/state or a ZIP code.'; return; }
-    const lat = parseFloat(results[0].lat);
-    const lon = parseFloat(results[0].lon);
-    if(searchMarker) map.removeLayer(searchMarker);
-    searchMarker = L.marker([lat, lon]).addTo(map).bindPopup(`<strong>${query}</strong><br>Verify property and waterway details before purchase.`).openPopup();
-    map.setView([lat, lon], 16);
-    searchStatus.textContent = 'Address found. Click nearby canals for details.';
-  }catch(e){
-    searchStatus.textContent = 'Search is temporarily unavailable. Try again shortly.';
-  }
-}
-
-document.getElementById('searchBtn').addEventListener('click', searchAddress);
-document.getElementById('addressSearch').addEventListener('keydown', e => { if(e.key === 'Enter') searchAddress(); });
-showSalt.addEventListener('change', renderLayer);
-showFresh.addEventListener('change', renderLayer);
-showLabels.addEventListener('change', addLabels);
-document.getElementById('resetBtn').addEventListener('click', () => {
-  showSalt.checked = true; showFresh.checked = true; showLabels.checked = false;
-  if(searchMarker){ map.removeLayer(searchMarker); searchMarker = null; }
-  renderLayer();
-});
-
-loadCanals();
+[saltToggle, freshToggle].forEach(el => el.addEventListener('change', renderCanals));
+labelsToggle.addEventListener('change', renderCanals);
+searchBtn.addEventListener('click', searchCanal);
+searchInput.addEventListener('keydown', e => { if(e.key === 'Enter') searchCanal(); });
+resetBtn.addEventListener('click', resetView);
+window.addEventListener('resize', () => setTimeout(() => map.invalidateSize(), 100));
