@@ -3,116 +3,81 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cape Coral Waterway & Gulf Access Guide | Latitude 26° Gulf Coast Group</title>
-  <meta name="description" content="Explore Cape Coral canals, Gulf access, freshwater waterways, bridge considerations, and waterfront-home buying tips with Latitude 26° Gulf Coast Group." />
-  <link rel="preconnect" href="https://unpkg.com">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ/LolLqXgL+nCXkaDLPAfB/sVKxXw=" crossorigin="" />
+  <title>Latitude 26° Cape Coral Waterfront Explorer</title>
+  <meta name="description" content="Explore Cape Coral canals, Gulf access, freshwater waterways, and waterfront buying details with Latitude 26° Gulf Coast Group." />
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ9bgiPX2t1QdlsczziFEYB1q1z98uQ=" crossorigin="" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="hero">
-    <div class="hero-overlay">
-      <div class="container hero-inner">
-        <p class="eyebrow">Latitude 26° Gulf Coast Group</p>
-        <h1>Cape Coral Waterway & Gulf Access Guide</h1>
-        <p class="lead">Know the route before you fall in love with the view. Explore canal types, boating access, and waterfront-home considerations across Cape Coral.</p>
-        <a class="button" href="#map-section">Explore the Map</a>
+  <div class="app-shell">
+    <aside class="panel">
+      <div class="brand-card">
+        <div class="brand-kicker">Latitude 26° Gulf Coast Group</div>
+        <h1>Cape Coral Waterfront Explorer</h1>
+        <p>Search canals, compare Gulf access and freshwater areas, and get a smarter starting point before you fall in love with the view.</p>
       </div>
-    </div>
-  </header>
 
-  <main>
-    <section class="intro container">
-      <div>
-        <h2>Not All Waterfront Homes Are the Same</h2>
-        <p>Cape Coral waterfront homes can offer very different boating experiences. Some provide direct Gulf access with no bridges, others include bridge restrictions, and some are freshwater only. This guide is a starting point to help buyers understand what to verify before writing an offer.</p>
+      <div class="search-card">
+        <label for="addressSearch">Search a Cape Coral address</label>
+        <div class="search-row">
+          <input id="addressSearch" type="text" placeholder="Example: 1456 SE 13th Ter" />
+          <button id="searchBtn" type="button">Search</button>
+        </div>
+        <div id="searchStatus" class="status-text"></div>
       </div>
-      <div class="cta-card">
-        <h3>Want us to check a home?</h3>
-        <p>Send us the address and our team can help you review canal type, route, bridge considerations, flood zone, seawall, dock, and boat-lift details.</p>
-        <a class="button secondary" href="mailto:melodiehagopian@gmail.com?subject=Waterway%20Review%20Request">Request a Waterway Review</a>
-      </div>
-    </section>
 
-    <section id="map-section" class="map-wrap">
-      <div class="map-panel">
-        <div class="panel-header">
-          <h2>Interactive Canal Map</h2>
-          <p>Search an address or canal name, then click a canal for details.</p>
-        </div>
-        <div class="search-grid">
-          <div>
-            <label for="addressSearch">Search an address</label>
-            <div class="search-row">
-              <input id="addressSearch" type="text" placeholder="Example: 1456 SE 13th Ter, Cape Coral, FL" />
-              <button id="addressBtn">Search</button>
-            </div>
-          </div>
-          <div>
-            <label for="canalSearch">Search a canal</label>
-            <div class="search-row">
-              <input id="canalSearch" type="text" placeholder="Example: Rubicon Canal" />
-              <button id="canalBtn">Find</button>
-            </div>
-          </div>
-        </div>
-        <div class="filters">
-          <button class="filter active" data-filter="ALL">All</button>
-          <button class="filter" data-filter="SALT">Salt / Gulf System</button>
-          <button class="filter" data-filter="FRESH">Freshwater</button>
-        </div>
-        <div class="legend">
-          <span><i class="legend-salt"></i> Salt / Gulf System</span>
-          <span><i class="legend-fresh"></i> Freshwater</span>
-          <span><i class="legend-selected"></i> Selected</span>
-        </div>
+      <div class="quick-card">
+        <h2>Waterway Filters</h2>
+        <label class="check"><input type="checkbox" id="showSalt" checked /> Saltwater / Gulf Access areas</label>
+        <label class="check"><input type="checkbox" id="showFresh" checked /> Freshwater canals</label>
+        <label class="check"><input type="checkbox" id="showLabels" /> Show canal labels</label>
+        <button id="resetBtn" class="secondary-btn" type="button">Reset Map</button>
       </div>
-      <div id="map" aria-label="Cape Coral canal map"></div>
-    </section>
 
-    <section class="container cards-section">
-      <h2>Understanding Cape Coral Waterways</h2>
-      <div class="cards">
-        <article class="card">
-          <h3>Direct Gulf Access</h3>
-          <p>Often called sailboat access, these homes may provide unrestricted access to the Caloosahatchee River and Gulf of Mexico. Always verify the route and depth for your specific boat.</p>
-        </article>
-        <article class="card">
-          <h3>Gulf Access With Bridges</h3>
-          <p>These homes can reach open water, but your route may pass under one or more bridges. Bridge clearance, tide, and boat height matter.</p>
-        </article>
-        <article class="card">
-          <h3>Freshwater Canals</h3>
-          <p>Freshwater canal homes are popular for water views, kayaking, fishing, and peaceful living, but they do not provide boating access to the Gulf.</p>
-        </article>
+      <div class="legend-card">
+        <h2>Map Legend</h2>
+        <div class="legend-item"><span class="swatch salt"></span><div><strong>Saltwater / Gulf access system</strong><small>Verify bridges, locks, depths, and route details before purchasing.</small></div></div>
+        <div class="legend-item"><span class="swatch fresh"></span><div><strong>Freshwater system</strong><small>Beautiful waterfront living, but not connected to the Gulf.</small></div></div>
+        <div class="legend-item"><span class="swatch selected"></span><div><strong>Selected canal</strong><small>Click any waterway for details.</small></div></div>
       </div>
-    </section>
 
-    <section class="checklist-section">
-      <div class="container checklist-grid">
-        <div>
-          <h2>Before You Buy a Waterfront Home, Check This First</h2>
-          <p>Waterfront details can affect price, insurance, lifestyle, and resale value.</p>
+      <div class="report-card" id="reportCard">
+        <div class="eyebrow">Selected Waterway</div>
+        <h2 id="canalName">Click a canal on the map</h2>
+        <div class="fact-grid">
+          <div><span>Water Type</span><strong id="waterType">—</strong></div>
+          <div><span>Navigation System</span><strong id="navSystem">—</strong></div>
+          <div><span>Basin</span><strong id="basin">—</strong></div>
         </div>
-        <ul class="checklist">
-          <li>Gulf access or freshwater?</li>
-          <li>Direct route or bridges?</li>
-          <li>Bridge clearance for your boat?</li>
-          <li>Approximate boating time to open water?</li>
-          <li>Seawall condition and age?</li>
-          <li>Dock, lift, and electrical condition?</li>
-          <li>Flood zone and insurance considerations?</li>
-          <li>Any locks, weirs, or route restrictions?</li>
+        <p id="canalNote">Use this as a starting point. We can help verify the real-world boating details for a specific property before you write an offer.</p>
+        <a class="cta" id="askLink" href="https://livelatitude26.com/contact" target="_blank" rel="noopener">Ask Latitude 26° About This Waterway</a>
+      </div>
+
+      <div class="buyer-card">
+        <h2>Before Buying Waterfront</h2>
+        <ul>
+          <li>Confirm Gulf access vs. freshwater</li>
+          <li>Verify bridge clearances and route restrictions</li>
+          <li>Check seawall, dock, and lift condition</li>
+          <li>Review flood zone and insurance needs</li>
+          <li>Confirm depth and fit for your specific boat</li>
         </ul>
       </div>
-    </section>
+    </aside>
 
-    <section class="container disclaimer">
-      <h2>Important Disclaimer</h2>
-      <p>This guide is for general informational purposes only. Waterway access, bridge clearances, canal conditions, boating routes, depths, seawalls, docks, lifts, and flood zones should always be independently verified through the City of Cape Coral, Lee County, official GIS resources, marine professionals, inspectors, surveyors, and insurance providers before purchasing a property.</p>
-      <p class="final-cta">Thinking about buying, selling, or investing in Southwest Florida? Our team at Latitude 26° Gulf Coast Group is here to help you every step of the way.</p>
-    </section>
-  </main>
+    <main class="map-wrap">
+      <div class="topbar">
+        <div>
+          <span class="top-kicker">Interactive Cape Coral canal map</span>
+          <strong id="countText">Loading waterways...</strong>
+        </div>
+        <a href="https://livelatitude26.com/contact" target="_blank" rel="noopener">Request a Waterway Review</a>
+      </div>
+      <div id="map"></div>
+      <div class="map-disclaimer">For planning and education only. Canal data, access, bridge clearance, boating time, depth, dock/lift condition, flood zone, and navigability must be independently verified.</div>
+    </main>
+  </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="script.js"></script>
