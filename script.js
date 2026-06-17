@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   fetch(DATA_URL)
     .then(function(response) {
+      if (!response.ok) {
+        throw new Error('Could not load Canals.geojson');
+      }
       return response.json();
     })
     .then(function(data) {
@@ -25,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
             opacity: 0.9
           };
         },
+
         onEachFeature: function(feature, layer) {
           const props = feature.properties || {};
           const name = props.NAME || 'Unnamed Waterway';
@@ -35,28 +39,25 @@ document.addEventListener('DOMContentLoaded', function () {
           layer.bindPopup(
             '<div class="popup-title">' + name + '</div>' +
             '<span class="popup-badge">' + waterType + '</span>' +
-            '<div class="popup-grid">' +
-              '<div class="popup-row"><span>Navigation System</span><strong>' + navSystem + '</strong></div>' +
-              '<div class="popup-row"><span>Basin</span><strong>' + basin + '</strong></div>' +
-            '</div>'
+            '<div class="popup-row"><span>Navigation System</span><strong>' + navSystem + '</strong></div>' +
+            '<div class="popup-row"><span>Basin</span><strong>' + basin + '</strong></div>'
           );
         }
       }).addTo(map);
 
       map.fitBounds(canalLayer.getBounds());
 
-      const loading = document.querySelector('.loading');
-      if (loading) loading.remove();
-
       setTimeout(function() {
         map.invalidateSize();
-      }, 300);
+      }, 400);
     })
     .catch(function(error) {
-      console.error('Map data failed to load:', error);
+      console.error('Map failed to load:', error);
+      document.getElementById('map').innerHTML =
+        '<div style="padding:30px;font-family:Arial;color:#073b5a;">Map data could not be loaded.</div>';
     });
 
-  setTimeout(function() {
+  window.addEventListener('resize', function() {
     map.invalidateSize();
-  }, 500);
+  });
 });
